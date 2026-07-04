@@ -11,9 +11,7 @@ import 'compress_logger.dart';
 
 class CompressViewModel extends ChangeNotifier {
   CancellationToken? _cts;
-  int _targetSizeLogToken = 0;
-  int _fpsLogToken = 0;
-  int _resLogToken = 0;
+
   bool _isSyncingResolution = false;
 
   String? _selectedPath;
@@ -655,31 +653,19 @@ class CompressViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _logSizeDebounced(int val) async {
-    final currentToken = ++_targetSizeLogToken;
-    await Future.delayed(const Duration(milliseconds: 150));
-    if (currentToken == _targetSizeLogToken) {
-      CompressLogger().debug('[Параметр] Целевой размер: $val МБ');
-    }
+  void _logSizeDebounced(int val) {
+    CompressLogger().debug('Целевой размер: $val МБ');
   }
 
-  void _logFpsDebounced(int fps) async {
-    final currentToken = ++_fpsLogToken;
-    await Future.delayed(const Duration(milliseconds: 150));
-    if (currentToken == _fpsLogToken) {
-      CompressLogger().debug('[Параметр] FPS: $fps');
-    }
+  void _logFpsDebounced(int fps) {
+    CompressLogger().debug('FPS: $fps');
   }
 
-  void _logResolutionDebounced(int w, int h) async {
-    final currentToken = ++_resLogToken;
-    await Future.delayed(const Duration(milliseconds: 150));
-    if (currentToken == _resLogToken) {
-      if (w == 0 && h == 0) {
-        CompressLogger().debug('[Параметр] Разрешение: Auto');
-      } else {
-        CompressLogger().debug('[Параметр] Разрешение: ${w}x$h');
-      }
+  void _logResolutionDebounced(int w, int h) {
+    if (w == 0 && h == 0) {
+      CompressLogger().debug('Разрешение: Auto');
+    } else {
+      CompressLogger().debug('Разрешение: ${w}x$h');
     }
   }
 
