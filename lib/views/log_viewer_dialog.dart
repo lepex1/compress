@@ -50,6 +50,16 @@ class _LogViewerDialogState extends State<LogViewerDialog> {
     });
   }
 
+  Color _colorForLevel(LogLevel level) {
+    return switch (level) {
+      LogLevel.debug => const Color(0xFF5B9BD5),
+      LogLevel.success => const Color(0xFF27AE60),
+      LogLevel.process => const Color(0xFF00BCD4),
+      LogLevel.warning => const Color(0xFFF39C12),
+      LogLevel.error => const Color(0xFFE74C3C),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -59,6 +69,28 @@ class _LogViewerDialogState extends State<LogViewerDialog> {
         : entries
             .where((e) => e.plainLine.toLowerCase().contains(_filter.toLowerCase()))
             .toList();
+
+    final spans = <InlineSpan>[];
+    for (int i = 0; i < filtered.length; i++) {
+      final entry = filtered[i];
+      final color = _colorForLevel(entry.level);
+      if (i > 0) spans.add(const TextSpan(text: '\n'));
+      spans.add(TextSpan(
+        text: entry.plainLine,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 12,
+          color: entry.level == LogLevel.warning ||
+                  entry.level == LogLevel.error
+              ? color
+              : cs.onSurface,
+          fontWeight: entry.level == LogLevel.warning ||
+                  entry.level == LogLevel.error
+              ? FontWeight.bold
+              : FontWeight.normal,
+        ),
+      ));
+    }
 
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
@@ -78,17 +110,21 @@ class _LogViewerDialogState extends State<LogViewerDialog> {
               child: filtered.isEmpty
                   ? Center(
                       child: Text(
-                        _filter.isEmpty ? 'Нет записей' : 'Ничего не найдено',
+                        _filter.isEmpty
+                            ? 'Нет записей'
+                            : 'Ничего не найдено',
                         style: TextStyle(color: cs.onSurfaceVariant),
                       ),
                     )
-                  : ListView.builder(
+                  : Scrollbar(
                       controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, i) => _LogLine(
-                        entry: filtered[i],
-                        cs: cs,
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        child: SelectableText.rich(
+                          TextSpan(children: spans),
+                        ),
                       ),
                     ),
             ),
@@ -200,62 +236,6 @@ class _LogViewerDialogState extends State<LogViewerDialog> {
           Text(
             _filter.isEmpty ? '$total записей' : 'Показано $shown из $total',
             style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-final class _LogLine extends StatelessWidget {
-  final LogEntry entry;
-  final ColorScheme cs;
-
-  const _LogLine({required this.entry, required this.cs});
-
-  Color _colorForLevel(LogLevel level) {
-    return switch (level) {
-      LogLevel.debug => const Color(0xFF5B9BD5),
-      LogLevel.success => const Color(0xFF27AE60),
-      LogLevel.process => const Color(0xFF00BCD4),
-      LogLevel.warning => const Color(0xFFF39C12),
-      LogLevel.error => const Color(0xFFE74C3C),
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _colorForLevel(entry.level);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 4,
-            height: 18,
-            margin: const EdgeInsets.only(top: 3, right: 8),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Expanded(
-            child: SelectableText(
-              entry.plainLine,
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12,
-                color: entry.level == LogLevel.warning ||
-                        entry.level == LogLevel.error
-                    ? color
-                    : cs.onSurface,
-                fontWeight: entry.level == LogLevel.warning ||
-                        entry.level == LogLevel.error
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-              ),
-            ),
           ),
         ],
       ),
