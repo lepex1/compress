@@ -47,7 +47,7 @@ flutter build windows --debug
 ./build/windows/x64/runner/Debug/compress.exe
 ```
 
-### Вариант 3 (для разработки)
+### Вариант 3
 ```bash
 git clone https://github.com/lepex1/compress.git
 cd compress
