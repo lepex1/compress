@@ -80,10 +80,7 @@ class _LogViewerDialogState extends State<LogViewerDialog> {
         style: TextStyle(
           fontFamily: 'monospace',
           fontSize: 12,
-          color: entry.level == LogLevel.warning ||
-                  entry.level == LogLevel.error
-              ? color
-              : cs.onSurface,
+          color: color,
           fontWeight: entry.level == LogLevel.warning ||
                   entry.level == LogLevel.error
               ? FontWeight.bold
