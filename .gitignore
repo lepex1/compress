@@ -50,3 +50,4 @@ app.*.map.json
 
 # Local scratch space
 /tmp/
+/assets-draft/

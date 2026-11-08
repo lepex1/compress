@@ -5,72 +5,89 @@
 # COMPRESS
 
 <p align="center">
-  <img src="assets/banner.en.png" alt="COMPRESS — shrinks video to the size you need without ruining the picture" width="1280">
+  <img src="assets/banner.en.png" alt="COMPRESS — shrinks video to a target size without hand-tuning FFmpeg" width="1280">
 </p>
 
 <p align="center">
-  <a href="https://github.com/lepex1/compress/releases/latest"><img src="https://img.shields.io/github/v/release/lepex1/compress?label=release&color=6750a4" alt="Release"></a>
-  <a href="https://github.com/lepex1/compress/releases"><img src="https://img.shields.io/github/downloads/lepex1/compress/total?label=downloads&color=6750a4" alt="Downloads"></a>
-  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D6" alt="Platform">
-  <img src="https://img.shields.io/badge/Flutter-3.x-02569B" alt="Flutter">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/lepex1/compress?color=6750a4" alt="License"></a>
+  <a href="https://github.com/lepex1/compress/releases/latest"><img src="https://img.shields.io/github/v/release/lepex1/compress?label=release&color=22d3ee" alt="release"></a>
+  <a href="https://github.com/lepex1/compress/releases"><img src="https://img.shields.io/github/downloads/lepex1/compress/total?label=downloads&color=22d3ee" alt="downloads"></a>
+  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D6" alt="platform">
+  <img src="https://img.shields.io/badge/flutter-3.x-02569B" alt="flutter">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/lepex1/compress?label=license&color=22d3ee" alt="license"></a>
 </p>
 
 <p align="center">
-  <b>Compresses video to a target size without wrecking the picture.</b><br>
-  Pick a target weight and resolution — the app derives the bitrate, encodes, and shows progress with an ETA.
+  <b>Compresses video to the size you ask for without wrecking the picture.<br>
+  You set a target weight — it derives the bitrate, picks a resolution and encodes.</b>
 </p>
 
 <p align="center">
   <a href="https://github.com/lepex1/shakal">Sibling project: shakal</a>
 </p>
 
-<!--
-  DEMO SLOT: record assets/demo.gif (~720 px wide, up to 5 MB) and uncomment the block below.
-<p align="center">
-  <img src="assets/demo.gif" alt="Demo: drop a file, pick a size, done" width="720">
-</p>
--->
+## Demo
 
 <!--
-  SCREENSHOT: capture the app window, ideally at 2x (around 2000 px wide),
-  save it as assets/app.png and uncomment the block below. width = half the file width.
+  DEMO SLOT: record assets/demo.gif (a real run, up to 5 MB, 880 px wide)
+  and uncomment the block below.
 <p align="center">
-  <img src="assets/app.png" alt="COMPRESS UI" width="1000">
+  <img src="assets/demo.gif" alt="Demo: dropped a video, set a target size, got the file" width="880">
 </p>
 -->
 
 ---
 
-## Features
+## Screenshot
 
-| Feature | What it gives you |
+<p align="center">
+  <img src="assets/app.png" alt="COMPRESS UI: target size, FPS, auto-plan preview" width="504">
+</p>
+
+---
+
+## Why it exists
+
+Phone video weighs 60–200 MB, and you cannot upload it everywhere: Telegram splits files at 2 GB, Discord gives you 10–25 MB, email 20 MB. Re-encoding by hand with `ffmpeg` means computing a bitrate from duration, checking whether it fit, and starting over.
+
+`compress` does that for you:
+
+1. **Reads** the file with FFprobe — duration, resolution, FPS, audio.
+2. **Derives** the bitrate from the target weight: 94 % of the budget goes to video and audio, 6 % to container overhead.
+3. **Checks** whether that bitrate is enough for the current resolution, and steps the frame down from 2160p to 144p if it is not.
+4. **Encodes** to H.264, H.265 or AV1 with live progress; at low bitrates it switches the preset to `veryfast` on its own so encoding does not drag on for hours.
+5. **Saves** the result next to the source with an `_optimized` suffix and enables `faststart`, so the file starts playing before it is fully downloaded.
+
+Example: 85 MB, 1280×720 @ 30 FPS, target 25 MB → the app previews `256×144 @ 30 FPS, ~60 kbps, preset veryfast` before it starts.
+
+---
+
+## Compatibility
+
+| Parameter | Value |
 |---|---|
-| **Target size** | A "how many megabytes should come out" slider — bitrate is derived from target size, duration and resolution (94 % of the budget goes to video+audio, 6 % to container overhead) |
-| **Three codecs** | H.264 (`libx264`), H.265 (`libx265`), AV1 (`libsvtav1` — presets 2–12 mapped automatically) |
-| **Speed presets** | `ultrafast` → `veryslow`; at low bitrates the preset switches to `veryfast` by itself so encoding does not take hours |
-| **Resolution & FPS** | From 3840×2160 down to 256×144; the `auto` mode picks a resolution that fits the bitrate budget; FPS from 1 up to the source rate |
-| **Audio** | AAC, Opus, stream copy, or strip it entirely; plus volume adjustment −3 … +10 dB |
-| **FastStart** | `-movflags +faststart` — video starts playing in a browser before it is fully downloaded |
-| **Guard rails** | Sliders never let you exceed the source size, FPS or resolution |
-| **FFmpeg bootstrapping** | No binary? It downloads `ffmpeg-master-latest-win64-gpl` from BtbN FFmpeg-Builds (~100 MB) with progress and ETA |
-| **Event log** | Colour-coded logs with search and copy — the exact FFmpeg command and the reason for any failure are visible |
-
-**Supported input formats:** `MP4`, `AVI`, `MOV`, `MKV`, `WebM`.
+| **OS** | Windows 10/11 x64 — tested. macOS and Linux: the Flutter code should build, but has not been tested |
+| **Codecs** | H.264 (`libx264`), H.265 (`libx265`), AV1 (`libsvtav1`, presets 2–12 mapped automatically) |
+| **Input formats** | MP4, AVI, MOV, MKV, WebM |
+| **Resolution and FPS** | 3840×2160 … 256×144, the `auto` mode fits the resolution to the bitrate budget; FPS from 1 up to the source rate |
+| **Audio** | AAC, Opus, stream copy, or strip it entirely; volume −3 … +10 dB |
+| **Engine** | FFmpeg: the `ffmpeg-master-latest-win64-gpl` build from BtbN FFmpeg-Builds (~100 MB), downloaded automatically when no binary is found |
 
 ---
 
-## Install
+## Quick start (Windows)
 
-### Option 1 — prebuilt archive (easiest)
+1. Download **`compress-win-x64.zip`** from **[Releases](https://github.com/lepex1/compress/releases/latest)** (~12 MB).
+2. Unpack it anywhere and run `compress.exe`.
+3. Windows will show SmartScreen — normal for an unsigned build: “More info” → “Run anyway”.
+4. Drop a video into the window, set the target size and press **«СЖАТЬ ВИДЕО»**.
 
-1. Open **[Releases](https://github.com/lepex1/compress/releases/latest)**.
-2. Download `compress-win-x64.zip` (~12 MB).
-3. Unpack anywhere and run `compress.exe`.
+No installation required — the Flutter runtime is bundled. On first launch the app fetches FFmpeg (~100 MB); after that it works offline.
 
-No installation required — the Flutter runtime is bundled. FFmpeg is fetched on first launch if missing.
+**Where the result goes:** next to the source file with an `_optimized` suffix, e.g. `C:\video\holiday_optimized.mp4`. The exact path is shown in the “Куда сохранить” box before you start. The UI is Russian-only.
 
-### Option 2 — build from source
+---
+
+## Run from source
 
 ```bash
 git clone https://github.com/lepex1/compress.git
@@ -80,41 +97,24 @@ flutter build windows --release
 ./build/windows/x64/runner/Release/compress.exe
 ```
 
-### Option 3 — development run
+**Requirements:** Flutter SDK 3.x and Visual Studio with “Desktop development with C++” — build only. Running a prebuilt copy needs Windows 10/11 x64.
 
-```bash
-flutter pub get
-flutter run -d windows
-```
-
-**Requirements:** Windows 10/11 x64, Flutter SDK 3.x (options 2–3 only). The UI is Russian-only.
+For development: `flutter run -d windows`.
 
 ---
 
-## Usage
-
-1. Drop a video into the window (or press **«ВЫБРАТЬ ФАЙЛ»**).
-2. Set the **target size** — e.g. 25 MB to fit a Telegram upload limit.
-3. Open **«Расширенные настройки»** if needed: codec, speed preset, resolution, FPS, audio, FastStart.
-4. Check the output path and hit **«СЖАТЬ ВИДЕО»**.
-5. The result lands next to the source with an `_optimized` suffix.
-
-Example: 85 MB, 1280×720 @ 30 FPS → target 25 MB → the app auto-picks `256×144 @ 30 FPS, ~60 kbps, preset veryfast` and shows that plan before it starts.
-
----
-
-## How it works
+## How compression works
 
 ```mermaid
-flowchart LR
-    A[Video] --> B[FFprobe: duration,<br/>resolution, FPS]
-    B --> C[Bitrate math<br/>target * 0.94 / duration]
+flowchart TD
+    A[Video] --> B[FFprobe: duration,<br/>resolution, FPS, audio]
+    B --> C[Bitrate = target · 0.94 · 8 / duration]
     C --> D{Enough bitrate<br/>for the resolution?}
     D -->|yes| E[FFmpeg encode<br/>x264 / x265 / SVT-AV1]
-    D -->|no| F[Step resolution down<br/>4K ... 144p]
+    D -->|no| F[Step resolution down<br/>2160p → 144p]
     F --> E
-    E --> G[Audio: AAC / Opus / copy / mute]
-    G --> H[FastStart + finished file]
+    E --> G[Audio: AAC / Opus / copy / none]
+    G --> H[faststart + _optimized file]
 ```
 
 The core formula:
@@ -123,37 +123,52 @@ The core formula:
 bitrate = (target_MB * 1024 * 1024 * 8 * 0.94) / duration_s
 ```
 
-Encoding is single-pass (VBR with `maxrate` = 1.5× and `bufsize` = 2× the target bitrate) — fast, but without two-pass scene analysis.
+What sets it apart from “just re-encode”:
+
+- **Resolution follows the budget**, not the other way round: for “25 MB out of 85 MB” the app drops the frame to 256×144 instead of producing a file twice the target.
+- **Single-pass VBR** with `maxrate` = 1.5× and `bufsize` = 2× the target bitrate — fast, but without two-pass scene analysis.
+- **Sliders never exceed the source**: you cannot pick a size, FPS or resolution above the original.
+- **The exact FFmpeg command is visible** in the event log, with search and copy, in case you want to reproduce it by hand.
+
+---
+
+## ⚠️ Read this
+
+- **The target weight is a hint, not a guarantee.** The bitrate is computed for video; audio adds drift: with `copy` the audio is not re-encoded and may add extra megabytes.
+- **One file at a time.** There is no batch mode.
+- **Software encoding only.** No NVENC/QuickSync: `libx264`, `libx265`, `libsvtav1`.
+- **AV1 is slow on CPU.** SVT-AV1 produces smaller files but takes several times longer than H.264.
+- **The first launch needs internet** until FFmpeg is downloaded. Everything after that works offline.
 
 ---
 
 ## FAQ
 
-**Why is AV1 so much slower than H.264?**
-SVT-AV1 is more size-efficient but noticeably slower on CPU. For a quick result use H.264 + `veryfast`.
+**SmartScreen/antivirus flags the `.exe`.**
+That happens with every unsigned build (a code-signing certificate costs money). You can skip the archive and build from source — the code is open.
+
+**The output is bigger than the target size.**
+Most likely the audio is set to `copy` and keeps its original bitrate. Switch to AAC or Opus for a tighter target.
 
 **Is there hardware encoding (NVENC / QuickSync)?**
-No. Encoding is software-only: `libx264`, `libx265`, `libsvtav1`.
+No. Encoding is software-only.
 
 **Can I compress several files at once?**
 Not yet — one file at a time.
 
-**The output is bigger than the target size.**
-The target is a hint for the video bitrate; with `-c:a copy` the audio is not re-encoded and can add extra megabytes. Use AAC/Opus if you need a precise size.
-
-**The app will not start offline.**
-If FFmpeg has not been downloaded yet, an internet connection is required. After the first download it works offline.
+**The app does not start offline.**
+Only if FFmpeg has not been downloaded yet. After the first fetch it sits next to the app and is used locally.
 
 ---
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE) — use it, fork it, change it.
 
-Uses [FFmpeg](https://ffmpeg.org/) (LGPL/GPL, downloaded separately, not shipped in the archive) and [Flutter](https://flutter.dev/) (BSD-3-Clause).
+This project is **not affiliated** with FFmpeg or its build providers. The list of third-party components and their licenses is in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md): FFmpeg (LGPL-2.1+ / GPL-2.0+ for the `gpl` build), BtbN FFmpeg-Builds, Flutter and pub.dev packages.
 
 ---
 
 <p align="center">
-  Built by <a href="https://lepex.vercel.app/">lepex1</a> · need the opposite — destroy the quality: <a href="https://github.com/lepex1/shakal">shakal</a>
+  Built by <a href="https://lepex.vercel.app/">lepex1</a>
 </p>
