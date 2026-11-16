@@ -17,8 +17,8 @@
 </p>
 
 <p align="center">
-  <b>Compresses video to the size you ask for without wrecking the picture.<br>
-  You set a target weight — it derives the bitrate, picks a resolution and encodes.</b>
+  <b>Compresses video to a target size while keeping the picture usable.<br>
+  Set the file size. The app calculates the bitrate, chooses a resolution and encodes the video.</b>
 </p>
 
 <p align="center">
@@ -47,9 +47,9 @@
 
 ## Why it exists
 
-Phone video weighs 60–200 MB, and you cannot upload it everywhere: Telegram splits files at 2 GB, Discord gives you 10–25 MB, email 20 MB. Re-encoding by hand with `ffmpeg` means computing a bitrate from duration, checking whether it fit, and starting over.
+Phone video weighs 60–200 MB, and you cannot upload it everywhere: Telegram splits files at 2 GB, Discord gives you 10–25 MB, email 20 MB. Running `ffmpeg` by hand means calculating a bitrate from the duration, checking the output size and repeating the encode.
 
-`compress` does that for you:
+`compress` handles those steps automatically:
 
 1. **Reads** the file with FFprobe — duration, resolution, FPS, audio.
 2. **Derives** the bitrate from the target weight: 94 % of the budget goes to video and audio, 6 % to container overhead.
@@ -123,7 +123,7 @@ The core formula:
 bitrate = (target_MB * 1024 * 1024 * 8 * 0.94) / duration_s
 ```
 
-What sets it apart from “just re-encode”:
+Main details:
 
 - **Resolution follows the budget**, not the other way round: for “25 MB out of 85 MB” the app drops the frame to 256×144 instead of producing a file twice the target.
 - **Single-pass VBR** with `maxrate` = 1.5× and `bufsize` = 2× the target bitrate — fast, but without two-pass scene analysis.
